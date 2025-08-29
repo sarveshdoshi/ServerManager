@@ -12,7 +12,7 @@ A lightweight, testable HTTP client for Swift with retries, logging, and iOS 13 
 
 Or add to your `Package.swift`:
 ```swift
-.package(url: "https://github.com/your-org/ServerManager.git", from: "1.0.0")
+.package(url: "https://github.com/sarveshdoshi/ServerManager.git", from: "1.0.0")
 ```
 
 ## Quick Start
@@ -115,4 +115,10 @@ You can inject your own dependencies via `HTTPClient` initializer:
 - Keep the package focused on transport, retries, logging, and error handling
 
 ## License
-MIT (or your preferred license)
+MIT License - see [LICENSE](LICENSE) file for details
+
+## Contributing
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## Support
+If you encounter any issues or have questions, please [open an issue](https://github.com/sarveshdoshi/ServerManager/issues) on GitHub.
