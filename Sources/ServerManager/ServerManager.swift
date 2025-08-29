@@ -3,9 +3,8 @@
 import Foundation
 
 
-class ServerManager {
-    static let shared = ServerManager()
-
+public class ServerManager {
+    public static let shared = ServerManager()
     private init() {}
 
     internal static var baseURL: String = ""
