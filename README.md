@@ -96,7 +96,10 @@ do {
     case .unexpectedStatusCode(let status): print(status)
     case .decodingFailed(let context, let underlying): print(context, underlying)
     case .requestFailed(let underlying): print(underlying)
-    case .noInternet: break
+    case .noInternet: 
+        print("No internet connection available")
+        // Handle offline state - show cached data, offline message, etc.
+        break
     }
 } catch {
     print("Unknown error: \(error)")
@@ -139,6 +142,7 @@ final class ExampleTests: XCTestCase {
 ## Customization
 You can inject your own dependencies via `HTTPClient` initializer:
 - `NetworkSession` (custom `URLSession` or mock)
+- `NetworkReachabilityProtocol` (custom network monitoring or mock)
 - `JSONDecoder` and `JSONEncoder`
 - `Logger`
 - `RetryPolicy`

@@ -12,25 +12,34 @@ final class HTTPClient {
     private let encoder: JSONEncoder
     private let logger: Logger
     private let retryPolicy: RetryPolicy
+    private let reachability: NetworkReachabilityProtocol
 
     init(
         session: NetworkSession = URLSessionAdapter(),
         decoder: JSONDecoder = JSONDecoder(),
         encoder: JSONEncoder = JSONEncoder(),
         logger: Logger = .init(),
-        retryPolicy: RetryPolicy = .default
+        retryPolicy: RetryPolicy = .default,
+        reachability: NetworkReachabilityProtocol = NetworkReachability()
     ) {
         self.session = session
         self.decoder = decoder
         self.encoder = encoder
         self.logger = logger
         self.retryPolicy = retryPolicy
+        self.reachability = reachability
     }
 
     func execute<Response: Codable>(
         _ request: URLRequest,
         maxRetries: Int
     ) async throws -> Response {
+        // Check network connectivity before making request
+        guard reachability.isNetworkAvailable else {
+            logger.error("No internet connection available")
+            throw NetworkingError.noInternet
+        }
+        
         var attemptIndex = 0
         var lastError: Error?
 
