@@ -1,6 +1,6 @@
 # ServerManager
 
-A lightweight, testable HTTP client for Swift with retries, logging, and iOS 13 compatibility.
+A lightweight, testable HTTP client for Swift with async await along with retries, logging, and iOS 13+ compatibility.
 
 ## Requirements
 - iOS 13+, tvOS 12+, macOS 11+
@@ -47,6 +47,39 @@ let created: CreateUserResponse = try await ServerManager.request(
     headers: ["Authorization": "Bearer <token>"],
     timeoutInterval: 20,
     maxRetries: 3
+)
+```
+
+### PUT to update a resource
+```swift
+struct UpdateUserRequest: Codable { let name: String; let email: String }
+
+let updated: User = try await ServerManager.request(
+    path: "/users/1",
+    method: .put,
+    body: UpdateUserRequest(name: "Alice Updated", email: "alice@example.com"),
+    headers: ["Authorization": "Bearer <token>"]
+)
+```
+
+### PATCH for partial updates
+```swift
+struct PatchUserRequest: Codable { let name: String? }
+
+let patched: User = try await ServerManager.request(
+    path: "/users/1",
+    method: .patch,
+    body: PatchUserRequest(name: "New Name"),
+    headers: ["Authorization": "Bearer <token>"]
+)
+```
+
+### DELETE a resource
+```swift
+let deleted: EmptyResponse = try await ServerManager.request(
+    path: "/users/1",
+    method: .delete,
+    headers: ["Authorization": "Bearer <token>"]
 )
 ```
 

@@ -27,7 +27,8 @@ struct RequestBuilder {
 
         for (k, v) in defaultHeaders { request.setValue(v, forHTTPHeaderField: k) }
 
-        if method != .get, let body = body {
+        // Add body for methods that support it
+        if method.supportsBody, let body = body {
             request.httpBody = try JSONEncoder().encode(body)
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         }
