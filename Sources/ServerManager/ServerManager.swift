@@ -21,7 +21,7 @@ public class ServerManager {
 
 
     // MARK: - Request Method
-    public static func request<T: Codable, U: Codable>(
+    public static func requestWithBody<T: Codable, U: Codable>(
         path: String,
         method: HTTPMethod = .get,
         queryParameters: [String: String]? = nil,
@@ -35,11 +35,32 @@ public class ServerManager {
             defaultHeaders: headers ?? [:],
             timeoutInterval: timeoutInterval
         )
-        let request = try builder.buildRequest(
+        let request = try builder.buildRequestWithBody(
             path: path,
             method: method,
             query: queryParameters,
             body: body
+        )
+        return try await client.execute(request, maxRetries: maxRetries)
+    }
+    
+    public static func requestWithoutBody<U: Codable>(
+        path: String,
+        method: HTTPMethod = .get,
+        queryParameters: [String: String]? = nil,
+        headers: [String: String]? = nil,
+        timeoutInterval: TimeInterval = 30.0,
+        maxRetries: Int = 1
+    ) async throws -> U {
+        let builder = RequestBuilder(
+            baseURL: baseURL,
+            defaultHeaders: headers ?? [:],
+            timeoutInterval: timeoutInterval
+        )
+        let request = try builder.buildRequestWithoutBody(
+            path: path,
+            method: method,
+            query: queryParameters
         )
         return try await client.execute(request, maxRetries: maxRetries)
     }

@@ -5,7 +5,7 @@ struct RequestBuilder {
     var defaultHeaders: [String: String] = [:]
     var timeoutInterval: TimeInterval = 30.0
 
-    func buildRequest<T: Codable>(
+    func buildRequestWithBody<T: Codable>(
         path: String,
         method: HTTPMethod,
         query: [String: String]?,
@@ -32,6 +32,30 @@ struct RequestBuilder {
             request.httpBody = try JSONEncoder().encode(body)
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         }
+
+        return request
+    }
+    
+    func buildRequestWithoutBody(
+        path: String,
+        method: HTTPMethod,
+        query: [String: String]?
+    ) throws -> URLRequest {
+        guard var components = URLComponents(string: baseURL + path) else {
+            throw NetworkingError.invalidURL
+        }
+
+        if let query = query, !query.isEmpty {
+            components.queryItems = query.map { URLQueryItem(name: $0.key, value: $0.value) }
+        }
+
+        guard let url = components.url else { throw NetworkingError.invalidURL }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = method.rawValue
+        request.timeoutInterval = timeoutInterval
+
+        for (k, v) in defaultHeaders { request.setValue(v, forHTTPHeaderField: k) }
 
         return request
     }
