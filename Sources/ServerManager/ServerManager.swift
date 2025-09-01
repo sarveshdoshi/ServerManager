@@ -2,23 +2,31 @@
 // https://docs.swift.org/swift-book
 import Foundation
 
-
 public class ServerManager {
     public static let shared = ServerManager()
     private init() {}
 
     internal static var baseURL: String = ""
     private static var client: HTTPClient = HTTPClient()
+    private static var reachability: NetworkReachabilityProtocol = NetworkReachability()
 
     public static func initialize(baseURL: String) {
         Self.baseURL = baseURL
+        // Rebuild the HTTPClient with the shared reachability so only one NWPathMonitor is used.
+        Self.client = HTTPClient(
+            session: URLSessionAdapter(),
+            decoder: JSONDecoder(),
+            encoder: JSONEncoder(),
+            logger: Logger(),
+            retryPolicy: .default,
+            reachability: Self.reachability
+        )
     }
 
     // Static method to construct full URL
     private static func constructURL(path: String) -> String {
         return baseURL + path
     }
-
 
     // MARK: - Request Method
     public static func requestWithBody<T: Codable, U: Codable>(
