@@ -7,7 +7,7 @@ A lightweight, testable HTTP client for Swift with async await along with retrie
 - Swift tools 5.7+
 
 ## Installation (Swift Package Manager)
-- In Xcode: File → Add Packages… → enter your repository URL → Add Package
+- In Xcode: File → Add Packages… → enter repository URL → Add Package
 - Link the `ServerManager` library to your app target
 
 Or add to your `Package.swift`:
