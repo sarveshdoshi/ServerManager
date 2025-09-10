@@ -10,7 +10,7 @@ public class ServerManager {
     private static var client: HTTPClient = HTTPClient()
     private static var reachability: NetworkReachabilityProtocol = NetworkReachability()
 
-    public static func initialize(baseURL: String) {
+    public static func initialize(baseURL: String, loggingEnabled: Bool = true) {
         Self.baseURL = baseURL
         // Rebuild the HTTPClient with the shared reachability so only one NWPathMonitor is used.
         Self.client = HTTPClient(
@@ -19,13 +19,9 @@ public class ServerManager {
             encoder: JSONEncoder(),
             logger: Logger(),
             retryPolicy: .default,
-            reachability: Self.reachability
+            reachability: Self.reachability,
+            loggingEnabled: loggingEnabled
         )
-    }
-
-    // Static method to construct full URL
-    private static func constructURL(path: String) -> String {
-        return baseURL + path
     }
 
     // MARK: - Request Method
@@ -35,8 +31,8 @@ public class ServerManager {
         queryParameters: [String: String]? = nil,
         body: T? = nil,
         headers: [String: String]? = nil,
-        timeoutInterval: TimeInterval = 30.0,
-        maxRetries: Int = 1
+        timeoutInterval: TimeInterval = 60.0,
+        maxRetries: Int = 0
     ) async throws -> U {
         let builder = RequestBuilder(
             baseURL: baseURL,
@@ -57,8 +53,8 @@ public class ServerManager {
         method: HTTPMethod = .get,
         queryParameters: [String: String]? = nil,
         headers: [String: String]? = nil,
-        timeoutInterval: TimeInterval = 30.0,
-        maxRetries: Int = 1
+        timeoutInterval: TimeInterval = 60.0,
+        maxRetries: Int = 0
     ) async throws -> U {
         let builder = RequestBuilder(
             baseURL: baseURL,

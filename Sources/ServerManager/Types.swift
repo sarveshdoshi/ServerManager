@@ -24,7 +24,7 @@ public enum HTTPMethod: String, CaseIterable {
 
 public enum NetworkingError: Error {
     case invalidURL
-    case requestFailed(Error)
+    case requestTimeout(Error)
     case invalidResponse
     case decodingFailed(String, Error)
     case unexpectedStatusCode(Int)

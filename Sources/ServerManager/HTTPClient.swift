@@ -13,6 +13,7 @@ final class HTTPClient {
     private let logger: Logger
     private let retryPolicy: RetryPolicy
     private let reachability: NetworkReachabilityProtocol
+    private let loggingEnabled: Bool
 
     init(
         session: NetworkSession = URLSessionAdapter(),
@@ -20,7 +21,8 @@ final class HTTPClient {
         encoder: JSONEncoder = JSONEncoder(),
         logger: Logger = .init(),
         retryPolicy: RetryPolicy = .default,
-        reachability: NetworkReachabilityProtocol = NetworkReachability()
+        reachability: NetworkReachabilityProtocol = NetworkReachability(),
+        loggingEnabled: Bool = true
     ) {
         self.session = session
         self.decoder = decoder
@@ -28,6 +30,7 @@ final class HTTPClient {
         self.logger = logger
         self.retryPolicy = retryPolicy
         self.reachability = reachability
+        self.loggingEnabled = loggingEnabled
     }
 
     func execute<Response: Codable>(
@@ -36,7 +39,9 @@ final class HTTPClient {
     ) async throws -> Response {
         // Check network connectivity before making request
         guard reachability.isNetworkAvailable else {
-            logger.error("No internet connection available")
+            if loggingEnabled {
+                logger.error("No internet connection available")
+            }
             throw NetworkingError.noInternet
         }
         
@@ -45,23 +50,46 @@ final class HTTPClient {
 
         while attemptIndex <= maxRetries {
             do {
-                logger.info("📤 Executing request: \(request.httpMethod ?? "-") \(request.url?.absoluteString ?? "-")")
+                if loggingEnabled {
+                    logger.info("📤 Executing request: \(request.httpMethod ?? "-") \(request.url?.absoluteString ?? "-")")
+                    if let headers = request.allHTTPHeaderFields {
+                        logger.info("📤 Request Headers: \(headers)")
+                    }
+                }
                 let (data, response) = try await session.data(for: request)
                 guard let httpResponse = response as? HTTPURLResponse else {
                     throw NetworkingError.invalidResponse
                 }
 
-                logger.info("📡 Response status: \(httpResponse.statusCode)")
+                if loggingEnabled {
+                    logger.info("📥 Response Headers: \(httpResponse.allHeaderFields)")
+                    logger.info("📡 Response status: \(httpResponse.statusCode)")
+                }
 
-                try Self.validateStatusCode(httpResponse.statusCode)
+                do {
+                    try Self.validateStatusCode(httpResponse.statusCode)
+                } catch {
+                    if loggingEnabled {
+                        logger.error("❌ Request failed with status code: \(httpResponse.statusCode)")
+                        if let body = String(data: data, encoding: .utf8) {
+                            logger.error("Response Body: \(body)")
+                        }
+                    }
+                    throw error
+                }
+                
                 do {
                     let decoded = try decoder.decode(Response.self, from: data)
-                    logger.prettyJSON(data)
+                    if loggingEnabled {
+                        logger.prettyJSON(data)
+                    }
                     return decoded
                 } catch {
-                    logger.error("Decoding failed into \(Response.self): \(error)")
-                    if let raw = String(data: data, encoding: .utf8) {
-                        logger.error("Raw body: \(raw)")
+                    if loggingEnabled {
+                        logger.error("Decoding failed into \(Response.self): \(error)")
+                        if let raw = String(data: data, encoding: .utf8) {
+                            logger.error("Raw body: \(raw)")
+                        }
                     }
                     throw NetworkingError.decodingFailed("Failed to decode response into type \(Response.self)", error)
                 }
@@ -69,7 +97,9 @@ final class HTTPClient {
                 lastError = error
                 if attemptIndex < maxRetries, retryPolicy.shouldRetry(error: error, attempt: attemptIndex) {
                     let delay = retryPolicy.delay(for: attemptIndex)
-                    logger.info("🔁 Retry #\(attemptIndex + 1) in \(String(format: "%.2f", delay))s due to: \(error)")
+                    if loggingEnabled {
+                        logger.info("🔁 Retry #\(attemptIndex + 1) in \(String(format: "%.2f", delay))s due to: \(error)")
+                    }
                     try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
                     attemptIndex += 1
                     continue
@@ -78,7 +108,7 @@ final class HTTPClient {
             }
         }
 
-        throw lastError ?? NetworkingError.requestFailed(NSError(domain: "", code: -1, userInfo: nil))
+        throw lastError ?? NetworkingError.requestTimeout(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Request Timed Out !"]))
     }
 
     private static func validateStatusCode(_ statusCode: Int) throws {
@@ -100,8 +130,3 @@ final class HTTPClient {
         }
     }
 }
-
-
-
-
-
